@@ -90,16 +90,15 @@ jobs:
 
     - name: Repo Sync
       run: |
-        repo sync -c -j6
+        repo sync -c -j$(sysctl -n hw.ncpu)
       working-directory: ${{ steps.pwd.outputs.pwd }}
 
     - name: Clone Trees
       if: steps.var.outputs.use_own_tree == 'true'
       run: |
-        git clone ${{ steps.var.outputs.dt_url }} -b ${{ steps.var.outputs.dt_branch }} workspace/${{ steps.var.outputs.dt_path }}
-        git clone ${{ steps.var.outputs.kt_url }} -b ${{ steps.var.outputs.kt_branch }} workspace/${{ steps.var.outputs.kt_path }}
-        git clone ${{ steps.var.outputs.vt_url }} -b ${{ steps.var.outputs.vt_branch }} workspace/${{ steps.var.outputs.vt_path }}
-        rm -rf workspace/${{ steps.var.outputs.dt_path }}/.git workspace/${{ steps.var.outputs.kt_path }}/.git workspace/${{ steps.var.outputs.vt_path }}/.git 
+        git clone ${{ steps.var.outputs.dt_url }} -b ${{ steps.var.outputs.dt_branch }} ${{ steps.pwd.outputs.pwd }}/${{ steps.var.outputs.dt_path }}
+        git clone ${{ steps.var.outputs.kt_url }} -b ${{ steps.var.outputs.kt_branch }} ${{ steps.pwd.outputs.pwd }}/${{ steps.var.outputs.kt_path }}
+        git clone ${{ steps.var.outputs.vt_url }} -b ${{ steps.var.outputs.vt_branch }} ${{ steps.pwd.outputs.pwd }}/${{ steps.var.outputs.vt_path }}
    
     - name: Clone Common Tree
       if: |
@@ -107,14 +106,12 @@ jobs:
         && steps.var.outputs.ct_branch != null
         && steps.var.outputs.ct_path != null
       run: |
-        git clone ${{ steps.var.outputs.ct_url }} -b ${{ steps.var.outputs.ct_branch }} workspace/${{ steps.var.outputs.ct_path }}
-        rm -rf workspace/${{ steps.var.outputs.ct_path }}/.git
+        git clone ${{ steps.var.outputs.ct_url }} -b ${{ steps.var.outputs.ct_branch }} ${{ steps.pwd.outputs.pwd }}/${{ steps.var.outputs.ct_path }}
 
     - name: Sync Device Dependencies
       run: |
-        PATH=~/bin:$PATH
         bash ${GITHUB_WORKSPACE}/scripts/convert.sh ${{ steps.var.outputs.dt_path }}/*.dependencies
-        repo sync -j$(nproc --all)
+        repo sync -j$(sysctl -n hw.ncpu)
       working-directory: ${{ steps.pwd.outputs.pwd }}
       continue-on-error: true
 
@@ -123,16 +120,15 @@ jobs:
                 
     - name: Start Building
       run: |
-        PATH=~/bin:$PATH
         source build/envsetup.sh
         ${{ steps.var.outputs.build_platform }} ${{ steps.var.outputs.rom_name }}_${{ steps.var.outputs.device_name }}-${{ steps.var.outputs.build_type }} 
-        ${{ steps.var.outputs.build_method }} ${{ steps.var.outputs.build_name }} -j$(nproc --all)
+        ${{ steps.var.outputs.build_method }} ${{ steps.var.outputs.build_name }} -j$(sysctl -n hw.ncpu)
       working-directory: ${{ steps.pwd.outputs.pwd }}
         
     - name: Upload Rom To Release
       uses: softprops/action-gh-release@v1
       with:
-        files: workspace/out/target/product/${{ steps.var.outputs.device_name }}/*.zip
+        files: ${{ steps.pwd.outputs.pwd }}/out/target/product/${{ steps.var.outputs.device_name }}/*.zip
         name: ${{ steps.var.outputs.date }} ${{ steps.var.outputs.device_name }} by ${{ steps.var.outputs.git_name }}
         tag_name: ${{ github.run_id }}
         body: Android Third-Party Rom built by ${{ steps.var.outputs.git_name }}
