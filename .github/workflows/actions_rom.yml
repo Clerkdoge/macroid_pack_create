@@ -90,7 +90,7 @@ jobs:
 
     - name: Repo Sync
       run: |
-        repo sync -c -j$(sysctl -n hw.ncpu)
+        repo sync -c
       working-directory: ${{ steps.pwd.outputs.pwd }}
 
     - name: Clone Trees
@@ -111,7 +111,7 @@ jobs:
     - name: Sync Device Dependencies
       run: |
         bash ${GITHUB_WORKSPACE}/scripts/convert.sh ${{ steps.var.outputs.dt_path }}/*.dependencies
-        repo sync -j$(sysctl -n hw.ncpu)
+        repo sync
       working-directory: ${{ steps.pwd.outputs.pwd }}
       continue-on-error: true
 
@@ -120,9 +120,10 @@ jobs:
                 
     - name: Start Building
       run: |
+        export TERM=xterm
         source build/envsetup.sh
         ${{ steps.var.outputs.build_platform }} ${{ steps.var.outputs.rom_name }}_${{ steps.var.outputs.device_name }}-${{ steps.var.outputs.build_type }} 
-        ${{ steps.var.outputs.build_method }} ${{ steps.var.outputs.build_name }} -j$(sysctl -n hw.ncpu)
+        ${{ steps.var.outputs.build_method }} ${{ steps.var.outputs.build_name }}
       working-directory: ${{ steps.pwd.outputs.pwd }}
         
     - name: Upload Rom To Release
