@@ -1,0 +1,140 @@
+name: rom-building
+
+on:
+  watch:
+    types: [started]
+    
+jobs:
+  build:
+#    if: github.event.repository.owner.id == github.event.sender.id
+    runs-on: macos-12
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+        
+#    - name: Clean Up
+#      uses: kiwi-roomservice/slimhub_actions@main
+        
+    - name: Prepare the environment
+      run: |
+        df -h
+        brew install repo
+        hdiutil create -type SPARSE -fs 'Case-sensitive Journaled HFS+' -size 160g ~/android.dmg
+        hdiutil attach ~/android.dmg.sparseimage -mountpoint /Volumes/android
+        echo "ulimit -S -n 1024" > ~/.bash_profile
+        source ~/.bash_profile
+         
+#    - name: Install required packages
+#      run: |
+#        brew install git gnupg flex bison gperf build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev libx11-dev tree lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc unzip jq libncurses5
+      
+    - name: Get Variables
+      run: |
+        echo "::set-output name=rom_name::$(jq -r '.rom_name' bdrom.json)"
+        echo "::set-output name=build_type::$(jq -r '.build_type' bdrom.json)"
+        echo "::set-output name=manifest_url::$(jq -r '.manifest_url' bdrom.json)"
+        echo "::set-output name=manifest_branch::$(jq -r '.manifest_branch' bdrom.json)"
+        echo "::set-output name=use_own_tree::$(jq -r '.use_own_tree' bdrom.json)"
+        echo "::set-output name=dt_url::$(jq -r '.dt_url' bdrom.json)"
+        echo "::set-output name=kt_url::$(jq -r '.kt_url' bdrom.json)"
+        echo "::set-output name=vt_url::$(jq -r '.vt_url' bdrom.json)"
+        echo "::set-output name=ct_url::$(jq -r '.ct_url' bdrom.json)"
+        echo "::set-output name=dt_branch::$(jq -r '.dt_branch' bdrom.json)"
+        echo "::set-output name=kt_branch::$(jq -r '.kt_branch' bdrom.json)"
+        echo "::set-output name=vt_branch::$(jq -r '.vt_branch' bdrom.json)"
+        echo "::set-output name=ct_branch::$(jq -r '.ct_branch' bdrom.json)"
+        echo "::set-output name=dt_path::$(jq -r '.dt_path' bdrom.json)"
+        echo "::set-output name=kt_path::$(jq -r '.kt_path' bdrom.json)"
+        echo "::set-output name=vt_path::$(jq -r '.vt_path' bdrom.json)"
+        echo "::set-output name=ct_path::$(jq -r '.ct_path' bdrom.json)"
+        echo "::set-output name=device_name::$(jq -r '.device_name' bdrom.json)"
+        echo "::set-output name=build_platform::$(jq -r '.build_platform' bdrom.json)"
+        echo "::set-output name=build_method::$(jq -r '.build_method' bdrom.json)"
+        echo "::set-output name=build_name::$(jq -r '.build_name' bdrom.json)"
+        echo "::set-output name=date::$(date +%F)"
+      id: var
+        
+#    - name: Start Rclone
+#      uses: NiceLabs/rclone-action@v1
+#      with:
+#        github-token: ${{ secrets.TOKEN }}
+#        config: ${{ secrets.DROPBOX }}
+#        config-secret-name: DROPBOX
+
+#    - name: Prepare Rclone Environment
+#      run: |
+#        sudo rm -rf /etc/fuse.conf
+#        sudo cp fuse.conf /etc/fuse.conf
+#        mkdir dropbox
+#        screen -S mount
+#        rclone mount dropbox: dropbox/ --allow-other --vfs-cache-mode writes
+#        kill -SIGINT
+
+#    - name: Install Repo
+#      run: |
+#        sudo curl https://gitee.com/oschina/repo/raw/fork_flow/repo-py3 > /usr/local/bin/repo
+#        sudo chmod a+x /usr/local/bin/repo
+#        pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple requests
+
+    - name: Initialize a Repo Client
+      run: |
+        cd /Volumes/android
+        mkdir workspace
+        cd workspace
+        echo "::set-output name=pwd::$(pwd)"
+        git config --global user.name "Pinkdoge"
+        git config --global user.email "42758990+Pinkdoge@users.noreply.github.com"
+        repo init -u ${{ steps.var.outputs.manifest_url }} -b ${{ steps.var.outputs.manifest_branch }} --no-repo-verify
+      id: pwd
+
+    - name: Repo Sync
+      run: |
+        repo sync -c -j6
+      working-directory: ${{ steps.pwd.outputs.pwd }}
+
+    - name: Clone Trees
+      if: steps.var.outputs.use_own_tree == 'true'
+      run: |
+        git clone ${{ steps.var.outputs.dt_url }} -b ${{ steps.var.outputs.dt_branch }} workspace/${{ steps.var.outputs.dt_path }}
+        git clone ${{ steps.var.outputs.kt_url }} -b ${{ steps.var.outputs.kt_branch }} workspace/${{ steps.var.outputs.kt_path }}
+        git clone ${{ steps.var.outputs.vt_url }} -b ${{ steps.var.outputs.vt_branch }} workspace/${{ steps.var.outputs.vt_path }}
+        rm -rf workspace/${{ steps.var.outputs.dt_path }}/.git workspace/${{ steps.var.outputs.kt_path }}/.git workspace/${{ steps.var.outputs.vt_path }}/.git 
+   
+    - name: Clone Common Tree
+      if: |
+        steps.var.outputs.ct_url != null
+        && steps.var.outputs.ct_branch != null
+        && steps.var.outputs.ct_path != null
+      run: |
+        git clone ${{ steps.var.outputs.ct_url }} -b ${{ steps.var.outputs.ct_branch }} workspace/${{ steps.var.outputs.ct_path }}
+        rm -rf workspace/${{ steps.var.outputs.ct_path }}/.git
+
+    - name: Sync Device Dependencies
+      run: |
+        PATH=~/bin:$PATH
+        bash ${GITHUB_WORKSPACE}/scripts/convert.sh ${{ steps.var.outputs.dt_path }}/*.dependencies
+        repo sync -j$(nproc --all)
+      working-directory: ${{ steps.pwd.outputs.pwd }}
+      continue-on-error: true
+
+    - name: Check Disk Space
+      run: df -h
+                
+    - name: Start Building
+      run: |
+        PATH=~/bin:$PATH
+        source build/envsetup.sh
+        ${{ steps.var.outputs.build_platform }} ${{ steps.var.outputs.rom_name }}_${{ steps.var.outputs.device_name }}-${{ steps.var.outputs.build_type }} 
+        ${{ steps.var.outputs.build_method }} ${{ steps.var.outputs.build_name }} -j$(nproc --all)
+      working-directory: ${{ steps.pwd.outputs.pwd }}
+        
+    - name: Upload Rom To Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: workspace/out/target/product/${{ steps.var.outputs.device_name }}/*.zip
+        name: ${{ steps.var.outputs.date }} ${{ steps.var.outputs.device_name }} by ${{ steps.var.outputs.git_name }}
+        tag_name: ${{ github.run_id }}
+        body: Android Third-Party Rom built by ${{ steps.var.outputs.git_name }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

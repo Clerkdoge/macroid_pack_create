@@ -1,0 +1,23 @@
+{
+  "manifest_url": "https://github.com/ResurrectionRemix/platform_manifest.git",
+  "manifest_branch": "Q",
+  "use_own_tree": true,
+  "dt_url": "https://github.com/ResurrectionRemix-Devices/android_device_xiaomi_vince",
+  "kt_url": "https://github.com/InAnskr/android_kernel_xiaomi_vince",
+  "vt_url": "https://github.com/InAnskr/android_vendor_xiaomi_msm8953-common",
+  "ct_url": "https://github.com/crdroidandroid/android_device_xiaomi_msm8953-common",
+  "dt_branch": "Q",
+  "kt_branch": "10.0",
+  "vt_branch": "10.0",
+  "ct_branch": "10.0",
+  "dt_path": "device/xiaomi/vince",
+  "kt_path": "kernel/xiaomi/vince",
+  "vt_path": "vendor/xiaomi",
+  "ct_path": "device/xiaomi/msm8953-common",
+  "build_platform": "lunch",
+  "rom_name": "rr",
+  "device_name": "vince",
+  "build_type": "userdebug",
+  "build_method": "mka",
+  "build_name": "bacon"
+}
