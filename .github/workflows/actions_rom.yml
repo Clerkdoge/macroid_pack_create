@@ -19,7 +19,7 @@ jobs:
     - name: Prepare the environment
       run: |
         df -h
-        brew install repo
+        brew install repo gnupg make Imagemagick
         hdiutil create -type SPARSE -fs 'Case-sensitive Journaled HFS+' -size 160g ~/android.dmg
         hdiutil attach ~/android.dmg.sparseimage -mountpoint /Volumes/android
         echo "ulimit -S -n 1024" > ~/.bash_profile
@@ -85,12 +85,12 @@ jobs:
         echo "::set-output name=pwd::$(pwd)"
         git config --global user.name "Pinkdoge"
         git config --global user.email "42758990+Pinkdoge@users.noreply.github.com"
-        repo init -u ${{ steps.var.outputs.manifest_url }} -b ${{ steps.var.outputs.manifest_branch }} --no-repo-verify
+        repo init -u ${{ steps.var.outputs.manifest_url }} -b ${{ steps.var.outputs.manifest_branch }}
       id: pwd
 
     - name: Repo Sync
       run: |
-        repo sync -c
+        repo sync -c --force-sync --no-clone-bundle --no-tags -j$(sysctl -n hw.ncpu)
       working-directory: ${{ steps.pwd.outputs.pwd }}
 
     - name: Clone Trees
@@ -111,7 +111,7 @@ jobs:
     - name: Sync Device Dependencies
       run: |
         bash ${GITHUB_WORKSPACE}/scripts/convert.sh ${{ steps.var.outputs.dt_path }}/*.dependencies
-        repo sync
+        repo sync -c --force-sync --no-clone-bundle --no-tags -j$(sysctl -n hw.ncpu)
       working-directory: ${{ steps.pwd.outputs.pwd }}
       continue-on-error: true
 
@@ -122,8 +122,8 @@ jobs:
       run: |
         export TERM=xterm
         source build/envsetup.sh
-        ${{ steps.var.outputs.build_platform }} ${{ steps.var.outputs.rom_name }}_${{ steps.var.outputs.device_name }}-${{ steps.var.outputs.build_type }} 
-        ${{ steps.var.outputs.build_method }} ${{ steps.var.outputs.build_name }}
+        echo -e "\n" | ${{ steps.var.outputs.build_platform }} ${{ steps.var.outputs.rom_name }}_${{ steps.var.outputs.device_name }}-${{ steps.var.outputs.build_type }} 
+        ${{ steps.var.outputs.build_method }} ${{ steps.var.outputs.build_name }} -j$(sysctl -n hw.ncpu)
       working-directory: ${{ steps.pwd.outputs.pwd }}
         
     - name: Upload Rom To Release
