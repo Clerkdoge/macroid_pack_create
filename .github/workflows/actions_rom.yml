@@ -19,11 +19,9 @@ jobs:
     - name: Prepare the environment
       run: |
         df -h
-        brew install repo gnupg make Imagemagick
+        brew install repo gnupg make Imagemagick sdl2
         hdiutil create -type SPARSE -fs 'Case-sensitive Journaled HFS+' -size 160g ~/android.dmg
         hdiutil attach ~/android.dmg.sparseimage -mountpoint /Volumes/android
-        echo "ulimit -S -n 1024" > ~/.bash_profile
-        source ~/.bash_profile
          
 #    - name: Install required packages
 #      run: |
@@ -118,11 +116,20 @@ jobs:
     - name: Check Disk Space
       run: df -h
                 
+    - name: Fix Some Errors
+      run: |
+        wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.11.sdk.tar.xz
+        sudo tar -xzvf MacOSX10.11.sdk.tar.xz -C /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
+        sed -i '/cc_binary_host/,+13 d' ${{ steps.pwd.outputs.pwd }}/external/v8/Android.bp
+        sed -i '/name: "v8_torque"/,+36 d' a.sh ${{ steps.pwd.outputs.pwd }}/external/v8/Android.bp
+      continue-on-error: true
+        
     - name: Start Building
       run: |
         export TERM=xterm
-        source build/envsetup.sh
-        echo -e "\n" | ${{ steps.var.outputs.build_platform }} ${{ steps.var.outputs.rom_name }}_${{ steps.var.outputs.device_name }}-${{ steps.var.outputs.build_type }} 
+        ulimit -S -n 1024
+        echo -e "\n" | source build/envsetup.sh
+        ${{ steps.var.outputs.build_platform }} ${{ steps.var.outputs.rom_name }}_${{ steps.var.outputs.device_name }}-${{ steps.var.outputs.build_type }} 
         ${{ steps.var.outputs.build_method }} ${{ steps.var.outputs.build_name }} -j$(sysctl -n hw.ncpu)
       working-directory: ${{ steps.pwd.outputs.pwd }}
         
