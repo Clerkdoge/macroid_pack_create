@@ -19,7 +19,7 @@ jobs:
     - name: Prepare the environment
       run: |
         df -h
-        brew install repo gnupg make Imagemagick sdl2
+        brew install repo gnupg make Imagemagick sdl2 gnu-sed
         hdiutil create -type SPARSE -fs 'Case-sensitive Journaled HFS+' -size 160g ~/android.dmg
         hdiutil attach ~/android.dmg.sparseimage -mountpoint /Volumes/android
         echo "ulimit -S -n 1024" > ~/.bash_profile
@@ -122,8 +122,8 @@ jobs:
       run: |
         wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.11.sdk.tar.xz
         sudo tar -xzvf MacOSX10.11.sdk.tar.xz -C /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
-        sed -i '/cc_binary_host/,+13 d' ${{ steps.pwd.outputs.pwd }}/external/v8/Android.bp
-        sed -i '/name: "v8_torque"/,+36 d' a.sh ${{ steps.pwd.outputs.pwd }}/external/v8/Android.bp
+        gsed -i '/cc_binary_host/,+13 d' ${{ steps.pwd.outputs.pwd }}/external/v8/Android.bp
+        gsed -i '/name: "v8_torque"/,+36 d' a.sh ${{ steps.pwd.outputs.pwd }}/external/v8/Android.bp
       continue-on-error: true
         
     - name: Start Building
