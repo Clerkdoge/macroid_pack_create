@@ -22,6 +22,8 @@ jobs:
         brew install repo gnupg make Imagemagick sdl2
         hdiutil create -type SPARSE -fs 'Case-sensitive Journaled HFS+' -size 160g ~/android.dmg
         hdiutil attach ~/android.dmg.sparseimage -mountpoint /Volumes/android
+        echo "ulimit -S -n 1024" > ~/.bash_profile
+        source ~/.bash_profile
          
 #    - name: Install required packages
 #      run: |
@@ -127,8 +129,7 @@ jobs:
     - name: Start Building
       run: |
         export TERM=xterm
-        ulimit -S -n 1024
-        echo -e "\n" | source build/envsetup.sh
+        source build/envsetup.sh | echo -e "\n"
         ${{ steps.var.outputs.build_platform }} ${{ steps.var.outputs.rom_name }}_${{ steps.var.outputs.device_name }}-${{ steps.var.outputs.build_type }} 
         ${{ steps.var.outputs.build_method }} ${{ steps.var.outputs.build_name }} -j$(sysctl -n hw.ncpu)
       working-directory: ${{ steps.pwd.outputs.pwd }}
