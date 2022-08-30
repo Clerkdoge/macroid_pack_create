@@ -129,7 +129,7 @@ jobs:
     - name: Start Building
       run: |
         export TERM=xterm
-        source build/envsetup.sh | echo -e "\n"
+        echo -e "\n" | source build/envsetup.sh
         ${{ steps.var.outputs.build_platform }} ${{ steps.var.outputs.rom_name }}_${{ steps.var.outputs.device_name }}-${{ steps.var.outputs.build_type }} 
         ${{ steps.var.outputs.build_method }} ${{ steps.var.outputs.build_name }} -j$(sysctl -n hw.ncpu)
       working-directory: ${{ steps.pwd.outputs.pwd }}
