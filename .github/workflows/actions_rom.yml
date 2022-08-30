@@ -123,7 +123,8 @@ jobs:
         wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.11.sdk.tar.xz
         sudo tar -xzvf MacOSX10.11.sdk.tar.xz -C /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
         gsed -i '/cc_binary_host/,+13 d' ${{ steps.pwd.outputs.pwd }}/external/v8/Android.bp
-        gsed -i '/name: "v8_torque"/,+36 d' a.sh ${{ steps.pwd.outputs.pwd }}/external/v8/Android.bp
+        gsed -i '/name: "v8_torque"/,+36 d' ${{ steps.pwd.outputs.pwd }}/external/v8/Android.bp
+        gsed -i sed 's/sed/gsed/g' ${{ steps.pwd.outputs.pwd }}/build/envsetup.sh
       continue-on-error: true
         
     - name: Start Building
