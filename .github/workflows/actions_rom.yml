@@ -20,7 +20,7 @@ jobs:
       run: |
         df -h
         brew install repo gnupg make Imagemagick sdl2
-        brew install brew install gnu-sed --with-default-names
+        brew install gnu-sed --with-default-names
         hdiutil create -type SPARSE -fs 'Case-sensitive Journaled HFS+' -size 160g ~/android.dmg
         hdiutil attach ~/android.dmg.sparseimage -mountpoint /Volumes/android
         echo "ulimit -S -n 1024" > ~/.bash_profile
