@@ -19,8 +19,7 @@ jobs:
     - name: Prepare the environment
       run: |
         df -h
-        brew install repo gnupg make Imagemagick sdl2
-        brew install gnu-sed --with-default-names
+        brew install repo gnupg make Imagemagick sdl2 gnu-sed
         hdiutil create -type SPARSE -fs 'Case-sensitive Journaled HFS+' -size 160g ~/android.dmg
         hdiutil attach ~/android.dmg.sparseimage -mountpoint /Volumes/android
         echo "ulimit -S -n 1024" > ~/.bash_profile
@@ -130,6 +129,7 @@ jobs:
     - name: Start Building
       run: |
         export TERM=xterm
+        alias sed=gsed
         echo -e "\n" | source build/envsetup.sh
         ${{ steps.var.outputs.build_platform }} ${{ steps.var.outputs.rom_name }}_${{ steps.var.outputs.device_name }}-${{ steps.var.outputs.build_type }} 
         ${{ steps.var.outputs.build_method }} ${{ steps.var.outputs.build_name }} -j$(sysctl -n hw.ncpu)
