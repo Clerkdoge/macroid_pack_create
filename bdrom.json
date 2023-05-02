@@ -1,6 +1,6 @@
 {
-  "manifest_url": "https://github.com/ResurrectionRemix/platform_manifest.git",
-  "manifest_branch": "Q",
+  "manifest_url": "https://github.com/PixelExperience/manifest.git",
+  "manifest_branch": "ten",
   "use_own_tree": true,
   "dt_url": "https://github.com/ResurrectionRemix-Devices/android_device_xiaomi_vince",
   "kt_url": "https://github.com/InAnskr/android_kernel_xiaomi_vince",
@@ -15,7 +15,7 @@
   "vt_path": "vendor/xiaomi",
   "ct_path": "device/xiaomi/msm8953-common",
   "build_platform": "lunch",
-  "rom_name": "rr",
+  "rom_name": "aosp",
   "device_name": "vince",
   "build_type": "userdebug",
   "build_method": "mka",
